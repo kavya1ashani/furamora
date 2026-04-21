@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Pet Care Made Simple</title>
+
+    <!-- Google Fonts — Display for headings and DM Sans for body text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet shared across all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- Fixed navigation bar at the top of the page -->
+<!-- The links scroll to sections on this page using anchor IDs like #services -->
+<nav>
+    <div class="nav-brand">
+        <img src="images/logo.png" alt="Furamora">
+        <span>Furamora</span>
+    </div>
+    <div class="nav-links">
+        <a href="#services">Services</a>
+        <a href="#how">How it works</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <!-- Login button takes the user to the login page -->
+        <a href="index.html" class="nav-cta">Login</a>
+    </div>
+</nav>
+
+<!-- Hero section — the first thing visitors see when they land on the page -->
+<section class="hero">
+    <div class="hero-inner">
+
+        <!-- Left side: main heading, description and call-to-action buttons -->
+        <div class="fade-up">
+            <div class="hero-eyebrow">London's trusted pet care platform</div>
+            <h1 class="hero-heading">
+                Your dog deserves<br>the <em>best walks</em><br>every single day.
+            </h1>
+            <p class="hero-sub">
+                Furamora connects London pet owners with trusted, verified
+                dog walkers — with live GPS tracking and detailed reports
+                after every visit.
+            </p>
+            <!-- Two buttons: one to register, one to log in -->
+            <div class="hero-actions">
+                <a href="register.html" class="btn-primary">Get Started Free</a>
+                <a href="index.html" class="btn-ghost">Login to Dashboard</a>
+            </div>
+            <!-- Small trust indicators below the buttons -->
+            <div class="trust-strip">
+                <div class="trust-item"><span class="trust-icon">✅</span> Verified walkers</div>
+                <div class="trust-item"><span class="trust-icon">📍</span> Live GPS tracking</div>
+                <div class="trust-item"><span class="trust-icon">📋</span> Walk reports</div>
+            </div>
+        </div>
+
+        <!-- Right side: hero photo with two small floating info cards on top -->
+        <div class="hero-visual fade-up delay-2">
+            <div class="hero-img-wrap">
+                <img src="images/dog-playing.jpg" alt="Happy dog running">
+            </div>
+
+            <!-- These two cards float over the image to show live features -->
+            <div class="float-card float-card-left">
+                <span class="float-icon">🐕</span>
+                <div>
+                    <div class="float-value">Live Walk</div>
+                    <div class="float-label">GPS active now</div>
+                </div>
+            </div>
+            <div class="float-card float-card-right">
+                <span class="float-icon">⭐</span>
+                <div>
+                    <div class="float-value">5.0 Rating</div>
+                    <div class="float-label">Trusted walkers</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Stats bar — shows platform numbers to build trust with new visitors -->
+<div class="stats-bar">
+    <div class="stats-inner">
+        <div class="stat-item">
+            <div class="stat-num">500+</div>
+            <div class="stat-label">Happy Pets</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">120+</div>
+            <div class="stat-label">Verified Walkers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">3,200+</div>
+            <div class="stat-label">Walks Completed</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">4.9★</div>
+            <div class="stat-label">Average Rating</div>
+        </div>
+    </div>
+</div>
+
+<!-- Services section — explains what Furamora offers -->
+<!-- id="services" is used by the nav link to scroll here -->
+<section class="services" id="services">
+    <div class="section-inner">
+        <span class="section-label">What we offer</span>
+        <h2 class="section-title">Services built<br>for your pet's wellbeing</h2>
+        <p class="section-sub">
+            Every service is designed with transparency and safety at its core —
+            so you can relax while your pet is in great hands.
+        </p>
+
+        <!-- Three service cards in a grid -->
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">🦮</div>
+                <h3>Dog Walking</h3>
+                <p>Daily and ad-hoc walks tailored to your dog's energy, age and breed — with real-time GPS so you can track every step.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🏠</div>
+                <h3>Drop-in Visits</h3>
+                <p>Home visits for feeding, water, playtime and litter changes. Ideal for cats and dogs who prefer to stay in their own environment.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">📋</div>
+                <h3>Walk Reports</h3>
+                <p>Receive a detailed written update after every walk. Know exactly how your pet's day went, every time.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works section — shows the 3 steps to get started -->
+<!-- id="how" is used by the nav link to scroll here -->
+<section class="how-it-works" id="how">
+    <div class="section-inner">
+        <span class="section-label">How it works</span>
+        <h2 class="section-title">Up and running<br>in three simple steps</h2>
+        <p class="section-sub" style="margin-bottom: 48px;">
+            From registration to your first completed walk — Furamora makes the whole process straightforward.
+        </p>
+
+        <!-- Three step cards -->
+        <div class="steps-grid">
+            <div class="step">
+                <div class="step-num">01</div>
+                <h3>Create your account</h3>
+                <p>Register as a pet owner or dog walker in minutes. Set up your profile, add your pets and you're ready to go.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <h3>Book a service</h3>
+                <p>Browse available walkers near you, choose your preferred date and time, and submit a booking request instantly.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <h3>Track & receive updates</h3>
+                <p>Follow your dog's walk live on the map and receive a full written report when the session is complete.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Furamora section — explains the key features of the platform -->
+<!-- id="about" is used by the nav link to scroll here -->
+<section class="why" id="about">
+    <div class="why-inner">
+
+        <!-- Left: photo with a small floating chip showing live tracking -->
+        <div class="why-img">
+            <img src="images/running-dog-sunset.jpg" alt="Dog walker at sunset">
+            <!-- Small overlay card to show the live tracking feature visually -->
+            <div class="why-chip">
+                <span class="why-chip-icon">📍</span>
+                <div>
+                    <div class="why-chip-text">Live tracking active</div>
+                    <div class="why-chip-sub">Walker is 0.3 km away</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: feature list explaining what makes Furamora different -->
+        <div>
+            <span class="section-label">Why Furamora</span>
+            <h2 class="section-title">Designed for trust, transparency and simplicity</h2>
+            <p style="font-size:0.95rem; color:var(--text-soft); line-height:1.7; margin-top:14px;">
+                Existing platforms charge high commissions and offer little real-time visibility.
+                Furamora was built specifically for London — keeping costs low and communication clear.
+            </p>
+
+            <!-- Four key features listed with icons -->
+            <ul class="features-list">
+                <li class="feature-item">
+                    <div class="feature-dot">🔒</div>
+                    <div>
+                        <h4>Role-based secure login</h4>
+                        <p>Separate dashboards for owners, walkers and admin — each with the right tools and no unnecessary clutter.</p>
+                    </div>
+                </li>
+                <li class="feature-item">
+                    <div class="feature-dot">🗺️</div>
+                    <div>
+                        <h4>Google Maps live tracking</h4>
+                        <p>See exactly where your dog is during a walk — powered by Google Maps API with real-time GPS updates.</p>
+                    </div>
+                </li>
+                <li class="feature-item">
+                    <div class="feature-dot">🏅</div>
+                    <div>
+                        <h4>Paw Points rewards</h4>
+                        <p>Earn loyalty points with every completed booking. Points build towards future discounts and rewards.</p>
+                    </div>
+                </li>
+                <li class="feature-item">
+                    <div class="feature-dot">💬</div>
+                    <div>
+                        <h4>Walk reports</h4>
+                        <p>Walkers submit a report after each session so owners always know how their pet is doing.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</section>
+
+<!-- CTA banner — encourages visitors to sign up -->
+<section class="cta-banner">
+    <div class="cta-inner">
+        <div>
+            <h2>Ready to give your dog the care they deserve?</h2>
+            <p>Join Furamora today — it's free to register and takes less than two minutes.</p>
+        </div>
+        <!-- Button links to the registration page -->
+        <a href="register.html" class="btn-white">Create Free Account →</a>
+    </div>
+</section>
+
+<!-- Contact section — shows how to get in touch -->
+<!-- id="contact" is used by the nav link and footer link to scroll here -->
+<section class="contact" id="contact">
+    <div class="section-inner">
+        <!-- Single column layout for the contact info -->
+        <div class="contact-grid" style="grid-template-columns: 1fr;">
+
+            <div class="contact-info">
+                <span class="section-label">Contact</span>
+                <h3>Get in touch</h3>
+                <p>
+                    Have a question about Furamora? Whether you're a pet owner or a dog walker,
+                    we're here to help. Get in touch and we'll get back to you as soon as possible.
+                </p>
+
+                <!-- Email contact item -->
+                <div class="contact-item">
+                    <div class="contact-item-icon">✉️</div>
+                    <div class="contact-item-text">
+                        <strong>Email</strong>
+                        <a href="mailto:support@furamora.co.uk" style="color:var(--accent);">support@furamora.co.uk</a>
+                    </div>
+                </div>
+                <!-- Phone contact item -->
+                <div class="contact-item">
+                    <div class="contact-item-icon">📞</div>
+                    <div class="contact-item-text">
+                        <strong>Phone</strong>
+                        <a href="tel:+447000000000" style="color:var(--accent);">+44 7000 000000</a>
+                    </div>
+                </div>
+                <!-- Location item -->
+                <div class="contact-item">
+                    <div class="contact-item-icon">📍</div>
+                    <div class="contact-item-text">
+                        <strong>Based in</strong>
+                        London, United Kingdom
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Footer — shown at the bottom of the page -->
+<footer>
+    <div class="footer-brand">Furamora</div>
+    <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    <!-- Quick links in the footer -->
+    <div class="footer-links">
+        <a href="index.html">Login</a>
+        <a href="register.html">Register</a>
+        <a href="#contact">Contact</a>
+    </div>
+</footer>
+
+</body>
+</html>

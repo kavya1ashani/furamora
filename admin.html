@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Admin Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet for all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- initAdminDashboard() runs when the page loads, defined in script.js -->
+<body class="dashboard-bg" onload="initAdminDashboard()">
+
+    <!-- Top navigation bar -->
+    <nav>
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+            <!-- Badge so it's clear this is the admin area -->
+            <span class="nav-admin-badge">Admin</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <a href="index.html" class="nav-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+
+        <!-- Page title and description -->
+        <div class="page-header fade-up">
+            <span class="page-label">Admin Dashboard</span>
+            <h1>Platform Overview</h1>
+            <p>Review all registered users and bookings across the Furamora platform.</p>
+        </div>
+
+        <!-- 4 stat cards at the top showing totals -->
+        <!-- The numbers are filled in by fillStatCards() in the script below -->
+        <div class="stats-row fade-up delay-1">
+
+            <div class="stat-card">
+                <div class="stat-card-icon">👥</div>
+                <div>
+                    <!-- id used by JS to insert the number -->
+                    <div class="stat-card-num" id="stat-total-users">—</div>
+                    <div class="stat-card-label">Total Users</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">🐾</div>
+                <div>
+                    <div class="stat-card-num" id="stat-owners">—</div>
+                    <div class="stat-card-label">Pet Owners</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">🦮</div>
+                <div>
+                    <div class="stat-card-num" id="stat-walkers">—</div>
+                    <div class="stat-card-label">Dog Walkers</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">📅</div>
+                <div>
+                    <div class="stat-card-num" id="stat-bookings">—</div>
+                    <div class="stat-card-label">Total Bookings</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Two columns: users on the left, bookings on the right -->
+        <div class="grid-2">
+
+            <!-- LEFT: All registered users -->
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">👥</div>
+                    Registered Users
+                </div>
+                <p class="card-sub">All owners and walkers registered on the platform.</p>
+
+                <!-- Dropdown to filter users by role -->
+                <!-- onchange calls renderAdminUsers() every time admin picks a different option -->
+                <div class="filter-row">
+                    <select id="admin-role-filter" onchange="renderAdminUsers()">
+                        <option value="all">All roles</option>
+                        <option value="owner">Owners</option>
+                        <option value="walker">Walkers</option>
+                    </select>
+                    <!-- This span gets updated by JS to show e.g. "3 users" -->
+                    <span class="result-count" id="user-count"></span>
+                </div>
+
+                <!-- User cards are injected here by renderAdminUsers() -->
+                <div id="admin-users-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">👤</div>
+                        No users found.
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: All bookings -->
+            <div class="card fade-up delay-3">
+                <div class="card-title">
+                    <div class="card-title-icon">📅</div>
+                    All Bookings
+                </div>
+                <p class="card-sub">Every booking submitted across the platform, with current status.</p>
+
+                <!-- Dropdown to filter bookings by status -->
+                <div class="filter-row">
+                    <select id="admin-status-filter" onchange="renderAdminBookings()">
+                        <option value="all">All statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Declined">Declined</option>
+                    </select>
+                    <!-- Updated by JS to show e.g. "5 bookings" -->
+                    <span class="result-count" id="booking-count"></span>
+                </div>
+
+                <!-- Booking cards injected here by renderAdminBookings() -->
+                <div id="admin-bookings-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        No bookings found.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs needed for Firestore and Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- My Firebase config (sets up db and auth) -->
+    <script src="firebase-init.js"></script>
+    <!-- Main JS file with all shared functions -->
+    <script src="script.js"></script>
+
+    <script>
+
+        // Load users from Firestore and display them in the users panel
+        // Filters out admin accounts so only owners and walkers are shown
+        function renderAdminUsers() {
+            const roleFilter = document.getElementById("admin-role-filter");
+            const list       = document.getElementById("admin-users-list");
+            const countEl    = document.getElementById("user-count");
+            if (!roleFilter || !list) return;
+
+            const filterValue = roleFilter.value || "all";
+            const firestore   = getFirestoreDb();
+
+            if (firestore) {
+                // Show loading message while Firestore fetches
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Loading users...</div>';
+
+                firestore.collection("users").get()
+                    .then(snapshot => {
+                        const users = [];
+                        snapshot.forEach(doc => {
+                            const u = doc.data();
+                            // Skip admin accounts — admin shouldn't see themselves listed
+                            if (u.role !== "admin") users.push(u);
+                        });
+
+                        // Apply the role filter if one is selected
+                        const filtered = filterValue === "all"
+                            ? users
+                            : users.filter(u => u.role === filterValue);
+
+                        renderUserCards(list, filtered, countEl);
+                    })
+                    .catch(err => {
+                        console.error("Firestore users error:", err);
+                        // If Firestore fails, try localStorage as backup
+                        const users = getUsers().filter(u => u.role !== "admin");
+                        const filtered = filterValue === "all"
+                            ? users : users.filter(u => u.role === filterValue);
+                        renderUserCards(list, filtered, countEl);
+                    });
+            } else {
+                // Firestore not available, use localStorage
+                const users = getUsers().filter(u => u.role !== "admin");
+                const filtered = filterValue === "all"
+                    ? users : users.filter(u => u.role === filterValue);
+                renderUserCards(list, filtered, countEl);
+            }
+        }
+
+        // Builds the HTML for each user card and adds it to the list
+        function renderUserCards(list, filtered, countEl) {
+            // Update the count label e.g. "3 users"
+            if (countEl) countEl.textContent = filtered.length + " user" + (filtered.length !== 1 ? "s" : "");
+
+            list.innerHTML = "";
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div>No users match this filter.</div>';
+                return;
+            }
+
+            filtered.forEach(u => {
+                // Get first letter(s) of name for the avatar circle
+                const initials = (u.name || "?")
+                    .split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+
+                // Work out account status and pick a colour for it
+                const status      = u.accountStatus || "active";
+                const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+                const statusColor = status === "active"  ? "#16a34a"
+                                  : status === "blocked" ? "#dc2626"
+                                  : "#6b7280";
+
+                // Only show Activate button if account is not already active
+                const activateBtn = status !== "active"
+                    ? `<button class="admin-btn admin-btn-activate" onclick="adminSetUserStatus('${u.id}', 'active')">Activate</button>` : "";
+                // Only show Block button if account is not already blocked
+                const blockBtn = status !== "blocked"
+                    ? `<button class="admin-btn admin-btn-block" onclick="adminSetUserStatus('${u.id}', 'blocked')">Block</button>` : "";
+                // Escape quotes in name so onclick doesn't break
+                const safeName = (u.name || "Unknown").replace(/'/g, "\\'");
+                const deleteBtn = `<button class="admin-btn admin-btn-delete" onclick="adminDeleteUser('${u.id}', '${u.email}', '${safeName}')">Delete</button>`;
+
+                const item = document.createElement("div");
+                item.className = "user-item";
+                item.innerHTML = `
+                    <div class="user-avatar">${initials}</div>
+                    <div class="user-item-info">
+                        <strong>${u.name || "Unknown"}</strong>
+                        <span>${u.email}</span>
+                        <span style="font-size:0.75rem;font-weight:600;color:${statusColor};margin-top:2px;">
+                            ● ${statusLabel}
+                        </span>
+                        <!-- Only show Paw Points for owners, not walkers -->
+                        ${u.role === "owner" ? `<span style="font-size:0.75rem;font-weight:600;color:var(--accent);margin-top:2px;">🏅 ${u.pawPoints || 0} Paw Points</span>` : ""}
+                    </div>
+                    <span class="role-badge role-${u.role}">${u.role}</span>
+                    <div class="admin-user-actions">
+                        ${activateBtn}${blockBtn}${deleteBtn}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Load all bookings from Firestore and display them in the bookings panel
+        function renderAdminBookings() {
+            const statusFilter = document.getElementById("admin-status-filter");
+            const list         = document.getElementById("admin-bookings-list");
+            const countEl      = document.getElementById("booking-count");
+            if (!statusFilter || !list) return;
+
+            const filterValue = statusFilter.value || "all";
+            const firestore   = getFirestoreDb();
+
+            if (firestore) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Loading bookings...</div>';
+
+                firestore.collection("bookings").get()
+                    .then(snapshot => {
+                        const bookings = [];
+                        snapshot.forEach(doc => bookings.push(doc.data()));
+                        displayAdminBookings(list, bookings, filterValue, countEl);
+                    })
+                    .catch(err => {
+                        console.error("Firestore error:", err);
+                        // Fall back to localStorage if Firestore fails
+                        displayAdminBookings(list, getBookings(), filterValue, countEl);
+                    });
+            } else {
+                // Firestore not available, use localStorage
+                displayAdminBookings(list, getBookings(), filterValue, countEl);
+            }
+        }
+
+        // Filters and renders the booking cards into the list
+        function displayAdminBookings(list, bookings, filterValue, countEl) {
+            // Filter by status if a specific one is selected
+            const filtered = bookings.filter(b =>
+                filterValue === "all" ? true : b.status === filterValue
+            );
+
+            // Show how many bookings match
+            if (countEl) countEl.textContent = filtered.length + " booking" + (filtered.length !== 1 ? "s" : "");
+
+            list.innerHTML = "";
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>No bookings match this filter.</div>';
+                return;
+            }
+
+            // Sort so newest bookings appear at the top
+            filtered.sort((a, b) => (b.createdAt || "").toString().localeCompare((a.createdAt || "").toString()));
+
+            filtered.forEach(b => {
+                // Pick the right badge colour based on booking status
+                const cls = {
+                    "Pending":    "badge-pending",
+                    "Accepted":   "badge-accepted",
+                    "Completed":  "badge-completed",
+                    "Declined":   "badge-declined",
+                    "InProgress": "badge-inprogress"
+                }[b.status] || "badge-pending";
+
+                const item = document.createElement("div");
+                item.className = "booking-item";
+                item.innerHTML = `
+                    <div class="booking-item-header">
+                        <strong>${b.service || "Dog Walk"}</strong>
+                        <span class="badge ${cls}">${b.status}</span>
+                    </div>
+                    <p>📅 ${b.date || "—"} at ${b.time || "—"}</p>
+                    <p>👤 Owner: ${b.ownerName || "Unknown"}</p>
+                    <p>🦮 Walker: ${b.walkerName || "Unassigned"}</p>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Updates the 4 stat cards at the top with real counts
+        function fillStatCards() {
+            const users    = getUsers().filter(u => u.role !== "admin");
+            const owners   = users.filter(u => u.role === "owner");
+            const walkers  = users.filter(u => u.role === "walker");
+            const bookings = getBookings();
+
+            // Helper to find an element and set its text
+            const el = id => document.getElementById(id);
+            if (el("stat-total-users")) el("stat-total-users").textContent = users.length;
+            if (el("stat-owners"))      el("stat-owners").textContent      = owners.length;
+            if (el("stat-walkers"))     el("stat-walkers").textContent     = walkers.length;
+            if (el("stat-bookings"))    el("stat-bookings").textContent    = bookings.length;
+        }
+
+        // initAdminDashboard is defined in script.js
+        // I'm extending it here so fillStatCards() also runs on load
+        const _origInit = initAdminDashboard;
+        initAdminDashboard = function () {
+            _origInit();
+            fillStatCards();
+        };
+
+    </script>
+
+</body>
+</html>

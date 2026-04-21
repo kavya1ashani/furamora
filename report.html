@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Walk Reports</title>
+
+    <!-- Google Fonts — same fonts used across all pages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet shared across all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- report-bg adds the gradient background and decorative blobs from style.css -->
+<body class="report-bg">
+
+    <!-- Static navigation bar — not fixed, scrolls with the page -->
+    <nav class="nav-static">
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <!-- Back button takes the owner back to their dashboard -->
+            <a href="owner.html" class="nav-back">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- report-wrap gives this page a narrower max-width than the dashboards -->
+    <div class="page-wrap report-wrap">
+
+        <!-- Page heading -->
+        <div class="page-header fade-up">
+            <span class="page-label">Walk Reports</span>
+            <h1>Your walk reports</h1>
+            <p>
+                A full record of walk reports submitted by your dog walkers.
+                Each report is attached to a completed booking.
+            </p>
+        </div>
+
+        <!-- The most recent report is highlighted here in a larger card -->
+        <!-- Filled by renderLatestReport() in the script below -->
+        <div id="latest-report-section" class="fade-up delay-1"></div>
+
+        <!-- Full list of all reports below the highlighted one -->
+        <!-- Filled by renderAllReports() in the script below -->
+        <div class="fade-up delay-2">
+            <div class="section-title">
+                All Reports
+                <!-- Report count updated by JS e.g. "3" -->
+                <span class="section-count" id="report-count">0</span>
+            </div>
+            <div id="all-reports-list"></div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs — must load before firebase-init.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- My Firebase config — sets up db and auth -->
+    <script src="firebase-init.js"></script>
+
+    <script>
+
+        // Gets the currently logged-in user from localStorage
+        function getCurrentUser() {
+            const raw = localStorage.getItem("currentUser");
+            if (!raw) return null;
+            try { return JSON.parse(raw); }
+            catch (e) { return null; }
+        }
+
+        // Shows the most recent report in the highlighted card at the top
+        function renderLatestReport(reports) {
+            const section = document.getElementById("latest-report-section");
+            if (!section) return;
+
+            const latest = reports[0];
+            // If there are no reports, leave the section empty
+            if (!latest) { section.innerHTML = ""; return; }
+
+            section.innerHTML = `
+                <div class="latest-card">
+                    <div class="latest-card-header">
+                        <div class="latest-card-title">
+                            <div class="latest-card-title-icon">📋</div>
+                            Latest Walk Report
+                        </div>
+                        <span class="latest-tag">Most Recent</span>
+                    </div>
+                    <div class="report-meta">
+                        <div class="report-meta-item">🦮 <span>${latest.walkerName || "Unknown walker"}</span></div>
+                        <div class="report-meta-item">📅 <span>${latest.date || "—"}</span></div>
+                        <div class="report-meta-item">🕐 <span>${latest.time || "—"}</span></div>
+                    </div>
+                    <div class="report-body">${latest.text}</div>
+                </div>
+            `;
+        }
+
+        // Renders the full list of all reports below the latest card
+        function renderAllReports(reports) {
+            const list    = document.getElementById("all-reports-list");
+            const countEl = document.getElementById("report-count");
+            if (!list) return;
+
+            // Update the count badge next to "All Reports"
+            if (countEl) countEl.textContent = reports.length;
+
+            if (reports.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>No reports yet</h3>
+                        <p>Walk reports will appear here once a walker submits one after completing a booking.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = "";
+            reports.forEach((r, index) => {
+                const item = document.createElement("div");
+                item.className = "report-card";
+                item.innerHTML = `
+                    <div class="report-card-header">
+                        <div><strong>📋 Walk Report</strong></div>
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <span style="font-size:0.8rem; color:var(--text-soft);">
+                                📅 ${r.date || "—"} · 🕐 ${r.time || "—"}
+                            </span>
+                            <!-- Tag the first item in the list as Latest -->
+                            ${index === 0 ? '<span class="latest-tag" style="font-size:0.72rem;">Latest</span>' : ""}
+                        </div>
+                    </div>
+                    <p style="margin-bottom:10px; font-size:0.82rem; color:var(--text-xsoft);">
+                        🦮 By ${r.walkerName || "Unknown walker"}
+                    </p>
+                    <p>${r.text}</p>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Shows a loading message while Firestore fetches the reports
+        function showLoading() {
+            const section = document.getElementById("latest-report-section");
+            const list    = document.getElementById("all-reports-list");
+            if (section) section.innerHTML = "";
+            if (list) list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⏳</div>
+                    <h3>Loading reports...</h3>
+                </div>`;
+        }
+
+        // Fallback if Firestore is not available — reads reports from localStorage instead
+        function loadFromLocalStorage(user) {
+            const raw = localStorage.getItem("reports");
+            let all = [];
+            try { all = JSON.parse(raw) || []; } catch(e) {}
+            // Only show reports that belong to this owner, sorted newest first
+            const reports = all
+                .filter(r => r.ownerId === user.id)
+                .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+            renderLatestReport(reports);
+            renderAllReports(reports);
+        }
+
+        // Used when the page is opened with ?id=xxx in the URL
+        // This happens when the owner clicks "View Full Report" from their dashboard
+        function renderSingleReport(r) {
+            // Update the page title and heading to match this specific report
+            document.title = "Furamora – Walk Report · " + (r.date || "");
+            const heading = document.querySelector(".page-header h1");
+            const sub     = document.querySelector(".page-header p");
+            if (heading) heading.textContent = "Walk Report";
+            if (sub)     sub.textContent     = "Submitted by " + (r.walkerName || "your walker") +
+                                               " on " + (r.date || "—") + " at " + (r.time || "—");
+
+            // Hide the "All Reports" list — only one report is being shown
+            const allSection = document.querySelector(".fade-up.delay-2");
+            if (allSection) allSection.style.display = "none";
+
+            // Show the single report in the highlighted card slot
+            const section = document.getElementById("latest-report-section");
+            if (!section) return;
+            section.innerHTML = `
+                <div class="latest-card">
+                    <div class="latest-card-header">
+                        <div class="latest-card-title">
+                            <div class="latest-card-title-icon">📋</div>
+                            Walk Report
+                        </div>
+                        <span class="latest-tag">Full Report</span>
+                    </div>
+                    <div class="report-meta">
+                        <div class="report-meta-item">🦮 <span>${r.walkerName || "Unknown walker"}</span></div>
+                        <div class="report-meta-item">📅 <span>${r.date || "—"}</span></div>
+                        <div class="report-meta-item">🕐 <span>${r.time || "—"}</span></div>
+                    </div>
+                    <div class="report-body">${r.text}</div>
+                </div>
+            `;
+        }
+
+        // Shows a friendly message if the report ID in the URL doesn't exist
+        // or doesn't belong to the logged-in owner
+        function showNotFound() {
+            const section = document.getElementById("latest-report-section");
+            const allSection = document.querySelector(".fade-up.delay-2");
+            if (allSection) allSection.style.display = "none";
+            if (section) section.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h3>Report not found</h3>
+                    <p>This report may have been deleted or you don't have permission to view it.</p>
+                </div>
+            `;
+        }
+
+        // Main function — waits for Firebase Auth to confirm the user is logged in
+        // then decides whether to show one report (?id=xxx) or all reports
+        function initReportsPage() {
+            const firebaseAuth = typeof auth !== "undefined" ? auth : null;
+
+            if (firebaseAuth) {
+                // Wait for Firebase Auth to restore the session before doing anything
+                firebaseAuth.onAuthStateChanged(firebaseUser => {
+                    if (!firebaseUser) {
+                        // Not logged in — send them to the login page
+                        window.location.href = "index.html";
+                        return;
+                    }
+
+                    const user = getCurrentUser();
+                    if (!user) { window.location.href = "index.html"; return; }
+
+                    showLoading();
+
+                    // Check if a specific report ID was passed in the URL
+                    const params   = new URLSearchParams(window.location.search);
+                    const reportId = params.get("id");
+
+                    const firestore = typeof db !== "undefined" ? db : null;
+
+                    if (reportId) {
+                        // SINGLE REPORT MODE — opened via "View Full Report" link
+                        if (firestore) {
+                            firestore.collection("reports").doc(reportId).get()
+                                .then(doc => {
+                                    if (!doc.exists) {
+                                        showNotFound();
+                                        return;
+                                    }
+                                    const report = doc.data();
+                                    // Security check — only show if this report belongs to this owner
+                                    if (report.ownerId !== user.id) {
+                                        showNotFound();
+                                        return;
+                                    }
+                                    renderSingleReport(report);
+                                })
+                                .catch(err => {
+                                    console.error("Firestore single report error:", err);
+                                    // Fall back to localStorage if Firestore fails
+                                    const raw = localStorage.getItem("reports");
+                                    let all = [];
+                                    try { all = JSON.parse(raw) || []; } catch(e) {}
+                                    const found = all.find(r => r.id === reportId && r.ownerId === user.id);
+                                    if (found) renderSingleReport(found);
+                                    else showNotFound();
+                                });
+                        } else {
+                            // No Firestore — try localStorage
+                            const raw = localStorage.getItem("reports");
+                            let all = [];
+                            try { all = JSON.parse(raw) || []; } catch(e) {}
+                            const found = all.find(r => r.id === reportId && r.ownerId === user.id);
+                            if (found) renderSingleReport(found);
+                            else showNotFound();
+                        }
+
+                    } else {
+                        // ALL REPORTS MODE — no ID in the URL, show everything
+                        if (firestore) {
+                            firestore.collection("reports")
+                                .where("ownerId", "==", user.id)
+                                .get()
+                                .then(snapshot => {
+                                    const reports = [];
+                                    snapshot.forEach(doc => reports.push(doc.data()));
+                                    // Sort newest first
+                                    reports.sort((a, b) =>
+                                        (b.date + b.time).localeCompare(a.date + a.time)
+                                    );
+                                    renderLatestReport(reports);
+                                    renderAllReports(reports);
+                                })
+                                .catch(err => {
+                                    console.error("Firestore reports error:", err);
+                                    loadFromLocalStorage(user);
+                                });
+                        } else {
+                            loadFromLocalStorage(user);
+                        }
+                    }
+                });
+            } else {
+                // Firebase Auth not available — use localStorage only
+                const user = getCurrentUser();
+                if (!user) { window.location.href = "index.html"; return; }
+
+                const params   = new URLSearchParams(window.location.search);
+                const reportId = params.get("id");
+
+                if (reportId) {
+                    const raw = localStorage.getItem("reports");
+                    let all = [];
+                    try { all = JSON.parse(raw) || []; } catch(e) {}
+                    const found = all.find(r => r.id === reportId && r.ownerId === user.id);
+                    if (found) renderSingleReport(found);
+                    else showNotFound();
+                } else {
+                    loadFromLocalStorage(user);
+                }
+            }
+        }
+
+        // Run the page initialisation when the script loads
+        initReportsPage();
+
+    </script>
+
+</body>
+</html>

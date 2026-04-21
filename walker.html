@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Walker Dashboard</title>
+
+    <!-- Google Fonts matching home page -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Global stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- initWalkerDashboard() runs on page load — defined in script.js -->
+<!-- It checks the user is logged in as a walker, then loads their data -->
+<body class="dashboard-bg" onload="initWalkerDashboard()">
+
+    <!-- Navigation bar -->
+    <nav>
+        <div class="nav-brand">
+            <!-- Logo and site name — links back to home via nav links -->
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <!-- Account dropdown — contains Logout and Delete Account -->
+            <div class="nav-account-menu" id="nav-account-menu">
+                <!-- Clicking this button calls toggleAccountMenu() to open/close the dropdown -->
+                <button class="nav-account-btn" onclick="toggleAccountMenu()">
+                    👤 My Account <span class="chevron">▼</span>
+                </button>
+                <div class="nav-account-dropdown">
+                    <!-- Logout sends the user back to the login page -->
+                    <a href="index.html">🚪 Logout</a>
+                    <hr class="nav-dropdown-divider">
+                    <!-- deleteOwnAccount() removes the user from Firestore and Auth -->
+                    <button class="nav-dropdown-delete" onclick="deleteOwnAccount()">🗑️ Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+
+        <!-- Page heading shown at the top of the dashboard -->
+        <div class="page-header fade-up">
+            <span class="page-label">Walker Dashboard</span>
+            <h1>Welcome back 🐾</h1>
+            <p>Manage your profile, respond to booking requests and track your walk history.</p>
+        </div>
+
+        <!-- ── ROW 1: Profile + Booking Requests ── -->
+        <!-- Two-column grid — profile on the left, bookings on the right -->
+        <div class="grid-2">
+
+            <!-- Profile card — lets the walker view and edit their details -->
+            <div class="card fade-up delay-1">
+                <div class="card-title">
+                    <div class="card-title-icon">👤</div>
+                    Your Profile
+                </div>
+                <p class="card-sub">Keep your name, availability and bio up to date so owners can find you.</p>
+
+                <!-- ── READ-ONLY DISPLAY (shown after saving) ── -->
+                <!-- This section is hidden by default and shown once a profile has been saved -->
+                <div id="walker-profile-display" class="profile-saved" style="display:none;">
+                    <div class="profile-saved-header">
+                        <!-- Walker's name pulled from Firestore and shown here -->
+                        <div class="profile-saved-name" id="display-walker-name"></div>
+                        <!-- Edit button switches back to the editable form -->
+                        <button type="button" class="btn-link" onclick="enableWalkerProfileEdit()">✏️ Edit</button>
+                    </div>
+                    <!-- Phone and bio shown as plain text in read-only view -->
+                    <p>📞 <span id="display-walker-phone"></span></p>
+                    <p>💬 <span id="display-walker-bio"></span></p>
+                    <!-- Available days shown as coloured pills -->
+                    <div style="margin-top:10px;">
+                        <span style="font-size:0.78rem; font-weight:600; color:var(--text); display:block; margin-bottom:6px;">Available days</span>
+                        <!-- renderDisplayDays() fills this with day pills -->
+                        <div id="display-walker-days"></div>
+                    </div>
+                </div>
+
+                <!-- ── EDITABLE FORM (hidden once profile is saved) ── -->
+                <!-- Shown on first visit or when the walker clicks Edit -->
+                <div id="walker-profile-form">
+
+                    <label for="walker-name">Full Name</label>
+                    <input id="walker-name" type="text" placeholder="Your name">
+
+                    <label for="walker-phone">Phone Number</label>
+                    <input id="walker-phone" type="text" placeholder="e.g. 07700 900000">
+
+                    <label for="walker-bio">Short Bio</label>
+                    <!-- Walker writes a short description of themselves here -->
+                    <textarea id="walker-bio" rows="3"
+                              placeholder="Experience, preferred breeds, any extra info..."></textarea>
+
+                    <!-- Weekly availability day picker -->
+                    <!-- Walker taps the day pills to toggle which days they are available -->
+                    <label style="margin-top:14px;">Availability — select your available days</label>
+                    <div class="day-picker" id="day-picker">
+                        <!-- Each button has a data-day attribute used by getSelectedDays() -->
+                        <button type="button" class="day-pill" data-day="Mon">Mon</button>
+                        <button type="button" class="day-pill" data-day="Tue">Tue</button>
+                        <button type="button" class="day-pill" data-day="Wed">Wed</button>
+                        <button type="button" class="day-pill" data-day="Thu">Thu</button>
+                        <button type="button" class="day-pill" data-day="Fri">Fri</button>
+                        <button type="button" class="day-pill" data-day="Sat">Sat</button>
+                        <button type="button" class="day-pill" data-day="Sun">Sun</button>
+                    </div>
+
+                    <div style="margin-top:18px;">
+                        <!-- Label is "Save Profile" on first save, "Update Profile" when editing -->
+                        <!-- saveWalkerProfile() is defined below and overrides the version in script.js -->
+                        <button type="button" id="save-walker-btn" class="btn-primary" onclick="saveWalkerProfile()">
+                            Save Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking requests card — shows pending and accepted bookings -->
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">📅</div>
+                    Booking Requests
+                </div>
+                <p class="card-sub">New requests from pet owners — accept or decline below.</p>
+
+                <!-- Pending requests filled dynamically by loadBookingsForWalker() in script.js -->
+                <span class="card-section-label">Pending Requests</span>
+                <div id="pendingBookings">
+                    <!-- Default empty state — replaced by JS when bookings are found -->
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        No pending requests right now.
+                    </div>
+                </div>
+
+                <hr class="card-divider">
+
+                <!-- Bookings this walker has accepted or completed -->
+                <span class="card-section-label">Accepted &amp; Completed</span>
+                <div id="confirmedBookings">
+                    <!-- Default empty state — replaced by JS when bookings are found -->
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        No confirmed bookings yet.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── ROW 2: Walk History + Report + Location ── -->
+        <!-- Three-column grid for the lower section of the dashboard -->
+        <div class="grid-3">
+
+            <!-- Walk history card — shows all past completed walks -->
+            <div class="card fade-up delay-1">
+                <div class="card-title">
+                    <div class="card-title-icon">🕓</div>
+                    Walk History
+                </div>
+                <p class="card-sub">All walks you have completed or accepted.</p>
+
+                <!-- History list filled by loadWalkHistoryForWalker() in script.js -->
+                <div id="walker-walk-history">
+                    <div class="empty-state">
+                        <div class="empty-icon">🐾</div>
+                        No walk history yet.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit walk report card — walker writes a note after each walk -->
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">📋</div>
+                    Submit Walk Report
+                </div>
+                <p class="card-sub">
+                    Write a short report after each walk. It attaches to your
+                    most recent accepted booking and is sent to the owner.
+                </p>
+
+                <label for="reportText">Report</label>
+                <!-- Walker types their walk notes here before submitting -->
+                <textarea id="reportText" rows="5"
+                          placeholder="Describe the walk: route, behaviour, toilet breaks, notes for the owner..."></textarea>
+
+                <!-- submitReport() in script.js saves the report to Firestore -->
+                <button type="button" class="btn-primary" onclick="submitReport()">
+                    Submit Report
+                </button>
+            </div>
+
+            <!-- Live location sharing card — lets the walker broadcast their GPS position -->
+            <div class="card fade-up delay-3">
+                <div class="card-title">
+                    <div class="card-title-icon">📍</div>
+                    Live Location
+                </div>
+                <p class="card-sub">
+                    Share your real-time GPS location with the pet owner during a walk.
+                </p>
+
+                <!-- Status box — JS updates the text and dot colour to show active/stopped -->
+                <div class="location-status">
+                    <div class="location-dot" id="location-dot"></div>
+                    <p id="live-location-status">
+                        Location sharing is currently <strong>stopped</strong>.
+                    </p>
+                </div>
+
+                <!-- Start and stop sharing buttons — functions are in script.js -->
+                <div class="location-btn-row">
+                    <!-- startTrackingForWalker() begins GPS broadcasting to Firestore -->
+                    <button type="button" class="btn-primary" onclick="startTrackingForWalker()">
+                        Start Sharing
+                    </button>
+                    <!-- stopTrackingForWalker() clears the GPS interval and updates Firestore -->
+                    <button type="button" class="btn-secondary" onclick="stopTrackingForWalker()">
+                        Stop Sharing
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs — must load before firebase-init.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase config — sets up db and auth globals -->
+    <script src="firebase-init.js"></script>
+    <!-- Main app logic — must load before the inline overrides below -->
+    <script src="script.js"></script>
+
+    <script>
+
+        // ── DAY PICKER TOGGLE ──────────────────────────────────
+        // Wire up click handlers for the 7 day pills in the form
+        // Clicking a pill adds or removes the "selected" class to highlight it
+        document.querySelectorAll('.day-pill').forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+
+        // Returns the currently selected days as an array e.g. ["Mon","Wed","Fri"]
+        // Reads data-day from every pill that has the "selected" class
+        function getSelectedDays() {
+            var days = [];
+            document.querySelectorAll('.day-pill.selected').forEach(function(p) {
+                days.push(p.getAttribute('data-day'));
+            });
+            return days;
+        }
+
+        // Pre-select pills that match a saved days array
+        // Called on load so previously saved days are highlighted in the picker
+        function setSelectedDays(daysArray) {
+            document.querySelectorAll('.day-pill').forEach(function(p) {
+                if (daysArray && daysArray.indexOf(p.getAttribute('data-day')) !== -1) {
+                    p.classList.add('selected');
+                } else {
+                    p.classList.remove('selected');
+                }
+            });
+        }
+
+        // Render saved days as accent pills inside the display card
+        // Shows a "No days set" fallback if the array is empty
+        function renderDisplayDays(daysArray) {
+            var container = document.getElementById('display-walker-days');
+            if (!container) return;
+            if (!daysArray || daysArray.length === 0) {
+                container.innerHTML = '<span style="font-size:0.82rem;color:var(--text-soft);">No days set</span>';
+                return;
+            }
+            // Build one pill element per day and join them together
+            container.innerHTML = daysArray.map(function(d) {
+                return '<span class="day-pill-display">' + d + '</span>';
+            }).join('');
+        }
+
+        // ── OVERRIDE fillWalkerProfile ─────────────────────────
+        // Replaces the script.js version so the day picker is
+        // populated on load and the display card renders correctly.
+        function fillWalkerProfile(user) {
+            // Get references to the editable form fields
+            var nameEl  = document.getElementById('walker-name');
+            var phoneEl = document.getElementById('walker-phone');
+            var bioEl   = document.getElementById('walker-bio');
+
+            // Fill the form fields with data from Firestore
+            if (nameEl)  nameEl.value  = user.name  || '';
+            if (phoneEl) phoneEl.value = user.phone || '';
+            if (bioEl)   bioEl.value   = user.bio   || '';
+
+            // Pre-select the day pills that match the walker's saved availability
+            var savedDays = Array.isArray(user.availableDays) ? user.availableDays : [];
+            setSelectedDays(savedDays);
+
+            // If a name is already saved, show the read-only display card instead of the form
+            var hasProfile = user.name && user.name.trim() !== '';
+            if (hasProfile) {
+                // Populate the read-only display fields
+                var nameShow  = document.getElementById('display-walker-name');
+                var phoneShow = document.getElementById('display-walker-phone');
+                var bioShow   = document.getElementById('display-walker-bio');
+                if (nameShow)  nameShow.textContent  = user.name  || '';
+                if (phoneShow) phoneShow.textContent = user.phone || 'Not set';
+                if (bioShow)   bioShow.textContent   = user.bio   || 'No bio yet.';
+                renderDisplayDays(savedDays);
+                // Already saved before — show display card, hide form
+                document.getElementById('walker-profile-display').style.display = 'block';
+                document.getElementById('walker-profile-form').style.display    = 'none';
+            } else {
+                // First time — show form with Save Profile button
+                document.getElementById('walker-profile-display').style.display = 'none';
+                document.getElementById('walker-profile-form').style.display    = 'block';
+                var btn = document.getElementById('save-walker-btn');
+                if (btn) btn.textContent = 'Save Profile';
+            }
+        }
+
+        // ── OVERRIDE enableWalkerProfileEdit ──────────────────
+        // Hides the display card and shows the form, restoring
+        // the saved values (including phone and day selections) into the inputs.
+        // Button label changes to "Update Profile" since this is an edit.
+        function enableWalkerProfileEdit() {
+            // Re-read saved data from localStorage to restore the form fields
+            var raw = localStorage.getItem('currentUser');
+            if (raw) {
+                try {
+                    var u = JSON.parse(raw);
+                    var nameEl  = document.getElementById('walker-name');
+                    var phoneEl = document.getElementById('walker-phone');
+                    var bioEl   = document.getElementById('walker-bio');
+                    if (nameEl)  nameEl.value  = u.name  || '';
+                    if (phoneEl) phoneEl.value = u.phone || '';
+                    if (bioEl)   bioEl.value   = u.bio   || '';
+                    // Restore the previously selected day pills
+                    setSelectedDays(Array.isArray(u.availableDays) ? u.availableDays : []);
+                } catch(e) {}
+            }
+            // Change button label to Update Profile when editing existing profile
+            var btn = document.getElementById('save-walker-btn');
+            if (btn) btn.textContent = 'Update Profile';
+
+            // Swap visibility — show form, hide the read-only display card
+            document.getElementById('walker-profile-display').style.display = 'none';
+            document.getElementById('walker-profile-form').style.display    = 'block';
+        }
+
+        // ── OVERRIDE saveWalkerProfile ─────────────────────────
+        // Saves name, phone, bio AND availableDays to Firestore + localStorage,
+        // then switches to view mode. The Save/Update button disappears with the form.
+        function saveWalkerProfile() {
+            // requireRole checks the user is logged in as a walker; returns null if not
+            var user = requireRole('walker');
+            if (!user) return;
+
+            // Get references to the form inputs
+            var nameEl  = document.getElementById('walker-name');
+            var phoneEl = document.getElementById('walker-phone');
+            var bioEl   = document.getElementById('walker-bio');
+
+            if (!nameEl || !phoneEl || !bioEl) { alert('Profile fields not found.'); return; }
+
+            // Read and trim values from the form
+            var name          = nameEl.value.trim();
+            var phone         = phoneEl.value.trim();
+            var bio           = bioEl.value.trim();
+            var availableDays = getSelectedDays(); // array of selected day strings
+
+            // Basic validation — name and phone are required
+            if (!name)  { alert('Please enter your name.'); return; }
+            if (!phone) { alert('Please enter your phone number.'); return; }
+
+            // Build the profile object to save — merges new data with existing user fields
+            var profileData = {
+                id:            user.id,
+                name:          name,
+                email:         user.email,
+                role:          user.role,
+                active:        user.active,
+                accountStatus: user.accountStatus || 'active',
+                distanceKm:    user.distanceKm    || null,
+                availability:  availableDays.join(', '), // kept for backwards compat
+                availableDays: availableDays,            // array used by the day picker
+                bio:           bio,
+                phone:         phone,
+                pets:          user.pets     || [],
+                pawPoints:     user.pawPoints || 0
+            };
+
+            // Save to Firestore using merge so other fields are not overwritten
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                firestore.collection('users').doc(user.id).set(profileData, { merge: true })
+                    .then(function() { console.log('Walker profile saved to Firestore'); })
+                    .catch(function(err) { console.error('Firestore error:', err); });
+            }
+
+            // Update local session so the page reflects the new data immediately
+            var updatedUser = Object.assign({}, user, profileData);
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+            // Populate the read-only display card with the newly saved values
+            var nameShow  = document.getElementById('display-walker-name');
+            var phoneShow = document.getElementById('display-walker-phone');
+            var bioShow   = document.getElementById('display-walker-bio');
+            if (nameShow)  nameShow.textContent  = name;
+            if (phoneShow) phoneShow.textContent = phone;
+            if (bioShow)   bioShow.textContent   = bio || 'No bio yet.';
+            renderDisplayDays(availableDays);
+
+            // Hide form (and the save/update button inside it), show display card
+            document.getElementById('walker-profile-display').style.display = 'block';
+            document.getElementById('walker-profile-form').style.display    = 'none';
+
+            alert('Profile saved!');
+        }
+
+        // ── ACCOUNT DROPDOWN TOGGLE ───────────────────────────
+        // Opens or closes the "My Account" dropdown in the nav bar
+        function toggleAccountMenu() {
+            var menu = document.getElementById('nav-account-menu');
+            if (menu) menu.classList.toggle('open');
+        }
+
+        // Close the dropdown when clicking anywhere outside it
+        document.addEventListener('click', function(e) {
+            var menu = document.getElementById('nav-account-menu');
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.remove('open');
+            }
+        });
+
+    </script>
+
+</body>
+</html>

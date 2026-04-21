@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Owner Dashboard</title>
+
+    <!-- Google Fonts — same fonts used across all pages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Google Maps API — needed for the live tracking map on this page -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCaou2SxWnGxChj_c4BTEM6lSAgR_hYhfo"></script>
+
+    <!-- Main stylesheet shared across all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- dashboard-bg applies the gradient background -->
+<!-- initOwnerDashboard() runs on load — it checks the user is logged in then fills the page -->
+<body class="dashboard-bg" onload="initOwnerDashboard()">
+
+    <!-- Fixed navigation bar -->
+    <nav>
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <!-- Dropdown menu with Logout and Delete Account options -->
+            <div class="nav-account-menu" id="nav-account-menu">
+                <button class="nav-account-btn" onclick="toggleAccountMenu()">
+                    👤 My Account <span class="chevron">▼</span>
+                </button>
+                <div class="nav-account-dropdown">
+                    <a href="index.html">🚪 Logout</a>
+                    <hr class="nav-dropdown-divider">
+                    <!-- deleteOwnAccount() removes the user from Firestore and Auth -->
+                    <button class="nav-dropdown-delete" onclick="deleteOwnAccount()">🗑️ Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+
+        <!-- Page heading -->
+        <div class="page-header fade-up">
+            <span class="page-label">Owner Dashboard</span>
+            <h1>Welcome back 🐶</h1>
+            <p>Manage your profile, pets and bookings all in one place.</p>
+        </div>
+
+        <!-- ROW 1: Profile card on the left, Create Booking card on the right -->
+        <div class="grid-2">
+
+            <!-- Profile card -->
+            <div class="card fade-up delay-1">
+                <div class="card-title">
+                    <div class="card-title-icon">👤</div>
+                    Your Profile
+                </div>
+                <p class="card-sub">Your name and phone number are shown to walkers when a booking is accepted.</p>
+
+                <!-- Read-only view shown after the profile has been saved -->
+                <!-- Hidden by default — JS shows it once profile exists -->
+                <div id="profile-display" class="profile-saved" style="display:none;">
+                    <div class="profile-saved-header">
+                        <div class="profile-saved-name" id="display-name"></div>
+                        <!-- Edit button switches back to the form -->
+                        <button type="button" class="btn-link" onclick="enableProfileEdit()">✏️ Edit</button>
+                    </div>
+                    <p>📞 <span id="display-phone"></span></p>
+                </div>
+
+                <!-- Editable form — shown on first visit or when Edit is clicked -->
+                <div id="owner-profile-form">
+                    <label for="owner-name">Full Name</label>
+                    <input type="text" id="owner-name" placeholder="Enter your name">
+
+                    <label for="owner-phone">Phone Number</label>
+                    <input type="text" id="owner-phone" placeholder="Enter your phone number">
+
+                    <div style="margin-top:18px;">
+                        <!-- Button label changes to "Update Profile" when editing -->
+                        <button type="button" id="save-profile-btn" class="btn-primary" onclick="saveOwnerProfile()">
+                            Save Profile
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="card-divider">
+
+                <!-- Walk reports section — filled by renderOwnerReports() in JS -->
+                <span class="card-section-label">Walk Reports</span>
+                <div id="owner-reports">
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        No walk reports yet.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Create Booking card -->
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">📅</div>
+                    Create a Booking
+                </div>
+                <p class="card-sub">Choose a service, pick a date and time, and submit your request to available walkers.</p>
+
+                <!-- Booking form fields -->
+                <label for="booking-service">Service Type</label>
+                <select id="booking-service">
+                    <option>Dog Walk</option>
+                    <option>Drop-in Visit</option>
+                </select>
+
+                <!-- Date and time inputs placed side by side using form-row -->
+                <div class="form-row">
+                    <div>
+                        <label for="booking-date">Date</label>
+                        <input type="date" id="booking-date">
+                    </div>
+                    <div>
+                        <label for="booking-time">Time</label>
+                        <input type="time" id="booking-time">
+                    </div>
+                </div>
+
+                <!-- saveBooking() saves the booking to Firestore -->
+                <button type="button" class="btn-primary" onclick="saveBooking()">
+                    Submit Booking
+                </button>
+
+                <hr class="card-divider">
+
+                <!-- List of this owner's bookings — filled by renderOwnerBookings() in JS -->
+                <span class="card-section-label">Your Bookings</span>
+                <p style="font-size:0.8rem; color:var(--text-soft); margin-bottom:12px;">
+                    Status updates automatically when a walker responds to your request.
+                </p>
+                <div id="owner-bookings">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        No bookings yet.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PAW POINTS card — full width row between rows 1 and 2 -->
+        <!-- Balance, tier and progress bar are all filled by renderPawPoints() in JS -->
+        <div class="grid-full fade-up delay-2">
+            <div class="card" style="background: linear-gradient(135deg, rgba(94,75,255,0.06), rgba(192,132,252,0.08));">
+                <div class="card-title">
+                    <div class="card-title-icon">🏅</div>
+                    Paw Points
+                </div>
+                <p class="card-sub">Earn 10 Paw Points every time a walker completes a walk and submits a report. Redeem points for future discounts.</p>
+
+                <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap; margin-bottom:18px;">
+
+                    <!-- Current points balance — updated by JS -->
+                    <div style="text-align:center;">
+                        <div style="font-family:'Playfair Display',serif; font-size:3rem; font-weight:700; color:var(--accent); line-height:1;"
+                             id="paw-points-balance">—</div>
+                        <div style="font-size:0.78rem; color:var(--text-soft); margin-top:4px; font-weight:500;">points earned</div>
+                    </div>
+
+                    <!-- Vertical divider line -->
+                    <div style="width:1px; height:56px; background:rgba(94,75,255,0.12);"></div>
+
+                    <!-- Current tier — updated by JS based on points total -->
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+                                    color:var(--text-soft); margin-bottom:4px;">Current tier</div>
+                        <div style="font-size:1.1rem; font-weight:700;" id="paw-points-tier">🐾 Starter</div>
+                    </div>
+
+                    <!-- Vertical divider line -->
+                    <div style="width:1px; height:56px; background:rgba(94,75,255,0.12);"></div>
+
+                    <!-- Static reference showing what each tier requires -->
+                    <div style="flex:1; min-width:180px;">
+                        <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+                                    color:var(--text-soft); margin-bottom:8px;">How tiers work</div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="font-size:0.82rem; color:var(--text-soft);">🐾 Starter — 0–49 pts</div>
+                            <div style="font-size:0.82rem; color:var(--text-soft);">🥉 Bronze &nbsp;— 50–99 pts</div>
+                            <div style="font-size:0.82rem; color:var(--text-soft);">🥈 Silver &nbsp;— 100–199 pts</div>
+                            <div style="font-size:0.82rem; color:var(--text-soft);">🏆 Gold &nbsp;&nbsp;&nbsp;— 200+ pts</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Progress bar and label showing how close the owner is to the next tier -->
+                <!-- Width and label text are updated by JS -->
+                <div style="font-size:0.78rem; color:var(--text-soft); margin-bottom:6px;" id="paw-points-progress-label">
+                    Next tier: Bronze at 50 points
+                </div>
+                <div style="height:8px; border-radius:999px; background:rgba(94,75,255,0.1); overflow:hidden;">
+                    <div id="paw-points-progress-bar"
+                         style="height:100%; border-radius:999px;
+                                background:linear-gradient(90deg,var(--accent),#c084fc);
+                                width:0%; transition:width 0.6s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 2: Pets, Available Walkers, Walk History -->
+        <div class="grid-3">
+
+            <!-- Pet management card -->
+            <div class="card fade-up delay-1">
+                <div class="card-title">
+                    <div class="card-title-icon">🐾</div>
+                    Your Pets
+                </div>
+                <p class="card-sub">Add your pets so walkers know who they are caring for.</p>
+
+                <!-- Pet list filled by renderPets() in JS -->
+                <div id="pet-list" style="margin-bottom:16px;">
+                    <div class="empty-state">
+                        <div class="empty-icon">🐕</div>
+                        No pets added yet.
+                    </div>
+                </div>
+
+                <hr class="card-divider">
+
+                <!-- Form to add a new pet — addPet() saves it to Firestore -->
+                <span class="card-section-label">Add a Pet</span>
+
+                <label for="pet-name">Pet Name</label>
+                <input type="text" id="pet-name" placeholder="e.g. Bella">
+
+                <label for="pet-type">Breed / Type</label>
+                <input type="text" id="pet-type" placeholder="e.g. Golden Retriever">
+
+                <label for="pet-notes">Notes</label>
+                <input type="text" id="pet-notes" placeholder="e.g. nervous with traffic">
+
+                <button type="button" class="btn-primary" onclick="addPet()">
+                    Add Pet
+                </button>
+            </div>
+
+            <!-- Available walkers card -->
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">🦮</div>
+                    Available Walkers
+                </div>
+                <p class="card-sub">Browse walkers near you. Filter by distance to narrow the list.</p>
+
+                <!-- Distance filter — applyWalkerFilter() re-runs the walker search -->
+                <label for="distance-filter">Filter by distance</label>
+                <div style="display:flex; gap:10px; margin-bottom:4px;">
+                    <select id="distance-filter" style="flex:1;">
+                        <option value="">Show all</option>
+                        <option value="1">Within 1 km</option>
+                        <option value="3">Within 3 km</option>
+                        <option value="5">Within 5 km</option>
+                    </select>
+                    <button type="button" class="btn-primary" style="margin-top:0; padding:10px 18px;"
+                            onclick="applyWalkerFilter()">
+                        Search
+                    </button>
+                </div>
+
+                <!-- Walker cards injected here by renderWalkersForOwner() in JS -->
+                <div id="walker-list" style="margin-top:14px;">
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        No walkers found.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Walk history card -->
+            <div class="card fade-up delay-3">
+                <div class="card-title">
+                    <div class="card-title-icon">🕓</div>
+                    Walk History
+                </div>
+                <p class="card-sub">All walks that have been completed with your pets.</p>
+
+                <!-- Completed bookings filled by renderOwnerWalkHistory() in JS -->
+                <div id="owner-walk-history">
+                    <div class="empty-state">
+                        <div class="empty-icon">🐾</div>
+                        No completed walks yet.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ROW 3: Live tracking map — full width -->
+        <div class="grid-full">
+            <div class="card fade-up delay-2">
+                <div class="card-title">
+                    <div class="card-title-icon">📍</div>
+                    Live Walk Tracking
+                </div>
+                <p class="card-sub">
+                    The map updates in real time when your walker starts sharing their location.
+                    Powered by Google Maps API.
+                </p>
+
+                <!-- Google Maps renders inside this div -->
+                <!-- Falls back to a placeholder if no location data is available -->
+                <div id="map"></div>
+                <div id="live-map" style="display:none;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs — must load before firebase-init.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase config — sets up db and auth -->
+    <script src="firebase-init.js"></script>
+    <!-- Main JS — must load before the overrides below -->
+    <script src="script.js"></script>
+
+    <script>
+
+        // renderPawPoints is overridden here so the progress bar and label
+        // on this page also update when points are loaded from Firestore
+        function renderPawPoints(user) {
+            const balanceEl  = document.getElementById('paw-points-balance');
+            const tierEl     = document.getElementById('paw-points-tier');
+            const barEl      = document.getElementById('paw-points-progress-bar');
+            const labelEl    = document.getElementById('paw-points-progress-label');
+            if (!balanceEl) return;
+
+            // Inner function that updates all the UI elements once we have the points value
+            function applyPoints(points) {
+                balanceEl.textContent = points;
+
+                // Pick the right tier label and colour based on points total
+                var tier, color;
+                if      (points >= 200) { tier = '🏆 Gold';   color = '#d97706'; }
+                else if (points >= 100) { tier = '🥈 Silver'; color = '#6b7280'; }
+                else if (points >= 50)  { tier = '🥉 Bronze'; color = '#92400e'; }
+                else                    { tier = '🐾 Starter'; color = '#5e4bff'; }
+                if (tierEl) { tierEl.textContent = tier; tierEl.style.color = color; }
+
+                // Calculate how far along the progress bar should be
+                var nextTier, nextPts, pct;
+                if      (points >= 200) { nextTier = 'Gold';   nextPts = 200; pct = 100; }
+                else if (points >= 100) { nextTier = 'Gold';   nextPts = 200; pct = Math.round(((points - 100) / 100) * 100); }
+                else if (points >= 50)  { nextTier = 'Silver'; nextPts = 100; pct = Math.round(((points - 50)  / 50)  * 100); }
+                else                    { nextTier = 'Bronze'; nextPts = 50;  pct = Math.round((points / 50) * 100); }
+
+                if (barEl)   barEl.style.width = pct + '%';
+                if (labelEl) {
+                    labelEl.textContent = points >= 200
+                        ? 'You have reached the highest tier — Gold! 🏆'
+                        : 'Next tier: ' + nextTier + ' at ' + nextPts + ' points (' + (nextPts - points) + ' to go)';
+                }
+            }
+
+            // Load the latest points from Firestore, fall back to local session if it fails
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                firestore.collection('users').doc(user.id).get()
+                    .then(function(doc) {
+                        applyPoints(doc.exists ? (doc.data().pawPoints || 0) : 0);
+                    })
+                    .catch(function() { applyPoints(user.pawPoints || 0); });
+            } else {
+                applyPoints(user.pawPoints || 0);
+            }
+        }
+
+        // fillOwnerProfile runs on page load
+        // If the owner has saved a profile before, show the read-only display card
+        // If not, show the editable form with "Save Profile"
+        function fillOwnerProfile(user) {
+            var nameEl  = document.getElementById('owner-name');
+            var phoneEl = document.getElementById('owner-phone');
+            if (nameEl)  nameEl.value  = user.name  || '';
+            if (phoneEl) phoneEl.value = user.phone || '';
+
+            var hasProfile = user.name && user.name.trim() !== '';
+            if (hasProfile) {
+                var nameShow  = document.getElementById('display-name');
+                var phoneShow = document.getElementById('display-phone');
+                if (nameShow)  nameShow.textContent  = user.name  || '';
+                if (phoneShow) phoneShow.textContent = user.phone || 'Not set';
+                document.getElementById('profile-display').style.display    = 'block';
+                document.getElementById('owner-profile-form').style.display = 'none';
+            } else {
+                // First visit — show the form so the owner can fill in their details
+                document.getElementById('profile-display').style.display    = 'none';
+                document.getElementById('owner-profile-form').style.display = 'block';
+                var btn = document.getElementById('save-profile-btn');
+                if (btn) btn.textContent = 'Save Profile';
+            }
+        }
+
+        // Called when the owner clicks the Edit button on their profile
+        // Restores their saved values into the form and shows it
+        function enableProfileEdit() {
+            var raw = localStorage.getItem('currentUser');
+            if (raw) {
+                try {
+                    var u = JSON.parse(raw);
+                    var nameEl  = document.getElementById('owner-name');
+                    var phoneEl = document.getElementById('owner-phone');
+                    if (nameEl)  nameEl.value  = u.name  || '';
+                    if (phoneEl) phoneEl.value = u.phone || '';
+                } catch(e) {}
+            }
+            // Change button label since this is an edit, not a first save
+            var btn = document.getElementById('save-profile-btn');
+            if (btn) btn.textContent = 'Update Profile';
+
+            document.getElementById('profile-display').style.display    = 'none';
+            document.getElementById('owner-profile-form').style.display = 'block';
+        }
+
+        // Saves the owner's name and phone to Firestore and localStorage
+        // Then hides the form and shows the read-only display card
+        function saveOwnerProfile() {
+            var user = requireRole('owner');
+            if (!user) return;
+
+            var nameEl  = document.getElementById('owner-name');
+            var phoneEl = document.getElementById('owner-phone');
+            if (!nameEl || !phoneEl) { alert('Profile fields not found.'); return; }
+
+            var name  = nameEl.value.trim();
+            var phone = phoneEl.value.trim();
+
+            if (!name)  { alert('Please enter your name.'); return; }
+            if (!phone) { alert('Please enter your phone number.'); return; }
+
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                // merge:true means only these fields are updated, nothing else is overwritten
+                firestore.collection('users').doc(user.id).set({
+                    id: user.id, name: name, email: user.email,
+                    role: user.role, active: user.active,
+                    distanceKm: user.distanceKm || null,
+                    availability: user.availability || '',
+                    bio: user.bio || '', phone: phone,
+                    pets: user.pets || []
+                }, { merge: true })
+                .then(function() { console.log('Owner profile saved to Firestore'); })
+                .catch(function(err) { console.error('Firestore error:', err); });
+            }
+
+            // Keep the local session in sync so the page doesn't need a reload
+            var updatedUser = Object.assign({}, user, { name: name, phone: phone });
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+            // Update the display card with the new values
+            var nameShow  = document.getElementById('display-name');
+            var phoneShow = document.getElementById('display-phone');
+            if (nameShow)  nameShow.textContent  = name;
+            if (phoneShow) phoneShow.textContent = phone;
+
+            // Switch back to the read-only view
+            document.getElementById('profile-display').style.display    = 'block';
+            document.getElementById('owner-profile-form').style.display = 'none';
+
+            alert('Profile saved!');
+        }
+
+        // Renders the owner's saved pets as cards in the pet list
+        function renderPets(user) {
+            var list = document.getElementById('pet-list');
+            if (!list) return;
+            var pets = Array.isArray(user.pets) ? user.pets : [];
+            if (pets.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">🐕</div>No pets added yet.</div>';
+                return;
+            }
+            list.innerHTML = '';
+            pets.forEach(function(pet) {
+                var item = document.createElement('div');
+                item.className = 'pet-card';
+                item.innerHTML =
+                    '<div class="pet-avatar">🐾</div>' +
+                    '<div class="pet-card-info">' +
+                        '<strong>' + pet.name + '</strong>' +
+                        '<span>' + pet.type + (pet.notes ? ' · ' + pet.notes : '') + '</span>' +
+                    '</div>';
+                list.appendChild(item);
+            });
+        }
+
+        // Renders the owner's bookings list with colour-coded status badges
+        function renderOwnerBookingsList(list, bookings) {
+            list.innerHTML = '';
+            if (bookings.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>No bookings yet.</div>';
+                return;
+            }
+            // Show newest bookings first
+            bookings.sort(function(a, b) {
+                return (b.createdAt || '').toString().localeCompare((a.createdAt || '').toString());
+            });
+            bookings.forEach(function(b) {
+                // Pick the right badge colour for the booking status
+                var cls = {
+                    'Pending':    'badge-pending',
+                    'Accepted':   'badge-accepted',
+                    'Completed':  'badge-completed',
+                    'Declined':   'badge-declined',
+                    'InProgress': 'badge-inprogress'
+                }[b.status] || 'badge-pending';
+                var item = document.createElement('div');
+                item.className = 'booking-item';
+                item.innerHTML =
+                    '<div class="booking-item-header">' +
+                        '<strong>' + (b.service || 'Dog Walk') + '</strong>' +
+                        '<span class="badge ' + cls + '">' + b.status + '</span>' +
+                    '</div>' +
+                    '<p>📅 ' + b.date + ' at ' + b.time + '</p>' +
+                    '<p>🦮 Walker: ' + (b.walkerName || 'Not yet assigned') + '</p>';
+                list.appendChild(item);
+            });
+        }
+
+        // Loads walk reports for this owner from Firestore and renders them
+        function renderOwnerReports(user) {
+            var container = document.getElementById('owner-reports');
+            if (!container) return;
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                firestore.collection('reports')
+                    .where('ownerId', '==', user.id)
+                    .get()
+                    .then(function(snapshot) {
+                        var reports = [];
+                        snapshot.forEach(function(doc) { reports.push(doc.data()); });
+                        displayOwnerReportsHTML(container, reports);
+                    })
+                    .catch(function() {
+                        // Fall back to localStorage if Firestore fails
+                        displayOwnerReportsHTML(container, getReports().filter(function(r) {
+                            return r.ownerId === user.id;
+                        }));
+                    });
+            } else {
+                displayOwnerReportsHTML(container, getReports().filter(function(r) {
+                    return r.ownerId === user.id;
+                }));
+            }
+        }
+
+        // Builds the HTML for each report card
+        // Each card has a "View Full Report" link that opens report.html with that report's ID
+        function displayOwnerReportsHTML(container, reports) {
+            if (reports.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No walk reports yet.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            reports.forEach(function(r) {
+                var item = document.createElement('div');
+                item.className = 'report-card';
+                item.innerHTML =
+                    '<div class="report-card-header">' +
+                        '<strong>' + r.date + ' · ' + r.time + '</strong>' +
+                        '<span style="font-size:0.8rem;color:var(--text-soft);">By ' + (r.walkerName || 'Unknown') + '</span>' +
+                    '</div>' +
+                    '<p style="margin-bottom:10px;">' + r.text + '</p>' +
+                    '<a href="report.html?id=' + r.id + '" target="_blank" ' +
+                       'style="display:inline-block;margin-top:6px;padding:6px 16px;' +
+                       'background:var(--accent-light);color:var(--accent);border-radius:999px;' +
+                       'font-size:0.8rem;font-weight:600;text-decoration:none;">' +
+                       '📄 View Full Report' +
+                    '</a>';
+                container.appendChild(item);
+            });
+        }
+
+        // Loads completed bookings for this owner and shows them as the walk history
+        function renderOwnerWalkHistory(user) {
+            var container = document.getElementById('owner-walk-history');
+            if (!container) return;
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                firestore.collection('bookings')
+                    .where('ownerId', '==', user.id)
+                    .where('status', '==', 'Completed')
+                    .get()
+                    .then(function(snapshot) {
+                        var completed = [];
+                        snapshot.forEach(function(doc) { completed.push(doc.data()); });
+                        displayWalkHistoryHTML(container, completed);
+                    })
+                    .catch(function() {
+                        displayWalkHistoryHTML(container, getBookings().filter(function(b) {
+                            return b.ownerId === user.id && b.status === 'Completed';
+                        }));
+                    });
+            } else {
+                displayWalkHistoryHTML(container, getBookings().filter(function(b) {
+                    return b.ownerId === user.id && b.status === 'Completed';
+                }));
+            }
+        }
+
+        // Builds the HTML for each walk history row
+        function displayWalkHistoryHTML(container, completed) {
+            if (completed.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">🐾</div>No completed walks yet.</div>';
+                return;
+            }
+            // Sort most recent walks to the top
+            completed.sort(function(a, b) { return b.date.localeCompare(a.date); });
+            container.innerHTML = '';
+            completed.forEach(function(b) {
+                var item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML =
+                    '<div class="history-item-left">' +
+                        '<strong>' + (b.service || 'Dog Walk') + '</strong>' +
+                        '<span>📅 ' + b.date + ' · 🦮 ' + (b.walkerName || 'Unknown') + '</span>' +
+                    '</div>' +
+                    '<span class="badge badge-completed">Completed</span>';
+                container.appendChild(item);
+            });
+        }
+
+        // Loads walkers from Firestore filtered by distance if selected
+        function renderWalkersForOwner() {
+            var list = document.getElementById('walker-list');
+            if (!list) return;
+            var distanceFilter = document.getElementById('distance-filter');
+            var maxDistance = distanceFilter && distanceFilter.value ? Number(distanceFilter.value) : null;
+            var firestore = getFirestoreDb();
+            if (firestore) {
+                firestore.collection('users')
+                    .where('role', '==', 'walker')
+                    .where('active', '==', true)
+                    .get()
+                    .then(function(snapshot) {
+                        var walkers = [];
+                        snapshot.forEach(function(doc) { walkers.push(doc.data()); });
+                        // Apply the distance filter if one is selected
+                        if (maxDistance) {
+                            walkers = walkers.filter(function(w) {
+                                return typeof w.distanceKm === 'number' && w.distanceKm <= maxDistance;
+                            });
+                        }
+                        displayWalkersHTML(list, walkers);
+                    })
+                    .catch(function() {
+                        displayWalkersHTML(list, getUsers().filter(function(u) {
+                            if (u.role !== 'walker' || u.active === false) return false;
+                            if (!maxDistance) return true;
+                            return typeof u.distanceKm === 'number' && u.distanceKm <= maxDistance;
+                        }));
+                    });
+            } else {
+                displayWalkersHTML(list, getUsers().filter(function(u) {
+                    if (u.role !== 'walker' || u.active === false) return false;
+                    if (!maxDistance) return true;
+                    return typeof u.distanceKm === 'number' && u.distanceKm <= maxDistance;
+                }));
+            }
+        }
+
+        // Builds the HTML for each walker card in the available walkers list
+        function displayWalkersHTML(list, walkers) {
+            if (walkers.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No walkers match this filter.</div>';
+                return;
+            }
+            list.innerHTML = '';
+            walkers.forEach(function(w) {
+                var item = document.createElement('div');
+                item.className = 'walker-card';
+                item.innerHTML =
+                    '<div class="walker-card-header">' +
+                        '<strong>' + w.name + '</strong>' +
+                        '<span class="distance-badge">📍 ' + (w.distanceKm || '?') + ' km</span>' +
+                    '</div>' +
+                    '<p>🕐 ' + (w.availability || 'Availability not set') + '</p>' +
+                    '<p>' + (w.bio || 'No bio yet.') + '</p>';
+                list.appendChild(item);
+            });
+        }
+
+        // Opens or closes the My Account dropdown in the nav
+        function toggleAccountMenu() {
+            var menu = document.getElementById('nav-account-menu');
+            if (menu) menu.classList.toggle('open');
+        }
+
+        // Close the dropdown if the user clicks anywhere outside it
+        document.addEventListener('click', function(e) {
+            var menu = document.getElementById('nav-account-menu');
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.remove('open');
+            }
+        });
+
+    </script>
+
+</body>
+</html>

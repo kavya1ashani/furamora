@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Create Account</title>
+
+    <!-- Google Fonts — same fonts used across all pages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet shared across all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- blob-bg adds the gradient background and decorative blobs from style.css -->
+<body class="blob-bg">
+
+    <!-- Static navigation bar — not fixed, scrolls with the page -->
+    <nav class="nav-static">
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <!-- Login button for users who already have an account -->
+            <a href="index.html" class="nav-cta">Login</a>
+        </div>
+    </nav>
+
+    <!-- Two-column layout: branding panel on the left, register card on the right -->
+    <div class="page-body">
+
+        <!-- LEFT: branding panel explaining the two roles -->
+        <div class="left-panel fade-up">
+
+            <div class="eyebrow">🐾 Join Furamora</div>
+
+            <h1>Find the <em>perfect walker</em><br>for your pet.</h1>
+
+            <p>
+                Create a free account in under two minutes. Choose whether
+                you're a pet owner looking for trusted care, or a dog walker
+                ready to take on new clients.
+            </p>
+
+            <!-- Two role cards help the user decide which option to pick -->
+            <div class="role-cards">
+
+                <div class="role-card">
+                    <div class="role-card-icon">🐶</div>
+                    <div>
+                        <h4>Pet Owner</h4>
+                        <p>Book walks and drop-in visits, track your pet live and receive reports after every session.</p>
+                    </div>
+                </div>
+
+                <div class="role-card">
+                    <div class="role-card-icon">🦮</div>
+                    <div>
+                        <h4>Dog Walker</h4>
+                        <p>Set your availability, accept bookings from local owners and build your client base.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT: registration card -->
+        <div class="register-card fade-up delay-2">
+
+            <h2>Create Account</h2>
+            <p class="card-sub">Sign up as a pet owner or a dog walker — it's completely free.</p>
+
+            <!-- Registration form — onsubmit returns false to stop the page reloading -->
+            <!-- registerUser() in script.js handles saving the account to Firebase -->
+            <form onsubmit="return false;">
+
+                <!-- Full name input -->
+                <div class="form-group">
+                    <label for="reg-name">Full Name</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input id="reg-name" type="text"
+                               placeholder="Your full name" required>
+                    </div>
+                </div>
+
+                <!-- Email input -->
+                <div class="form-group">
+                    <label for="reg-email">Email Address</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input id="reg-email" type="email"
+                               placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <!-- Password input — oninput calls checkPasswordStrength() as the user types -->
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input id="reg-password" type="password"
+                               placeholder="Create a password" required
+                               oninput="checkPasswordStrength(this.value)">
+                    </div>
+                    <!-- Strength bar fills and changes colour as the user types -->
+                    <div class="strength-bar-wrap">
+                        <div class="strength-bar" id="strength-bar"></div>
+                    </div>
+                    <!-- Hint text below the bar e.g. "Weak" or "Strong password ✓" -->
+                    <span class="strength-hint" id="strength-hint">Enter a password to see strength</span>
+                </div>
+
+                <!-- Role selector — registerUser() uses this to set the user's role in Firestore -->
+                <div class="form-group">
+                    <label for="reg-role">I am a</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🏷️</span>
+                        <select id="reg-role" required>
+                            <option value="">Select your role</option>
+                            <option value="owner">Pet Owner</option>
+                            <option value="walker">Dog Walker</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Calls registerUser() from script.js when clicked -->
+                <button type="button" class="btn-register" onclick="registerUser()">
+                    Create Free Account
+                </button>
+
+            </form>
+
+            <!-- Thin divider line between the form and the link below -->
+            <div class="card-divider"></div>
+
+            <!-- Link for users who already have an account -->
+            <p class="card-footer-text">
+                Already have an account?
+                <a href="index.html">Login instead</a>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs — must load before firebase-init.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- My Firebase config — sets up db and auth -->
+    <script src="firebase-init.js"></script>
+
+    <script>
+    // Password strength checker — runs every time the user types in the password field
+    // It checks for length, uppercase, numbers and symbols, then updates the bar and hint
+    function checkPasswordStrength(password) {
+        const bar  = document.getElementById("strength-bar");
+        const hint = document.getElementById("strength-hint");
+        if (!bar || !hint) return;
+
+        let strength = 0;
+
+        // Add 1 point for each rule the password passes
+        if (password.length >= 8)            strength++;
+        if (/[A-Z]/.test(password))          strength++;
+        if (/[0-9]/.test(password))          strength++;
+        if (/[^A-Za-z0-9]/.test(password))  strength++;
+
+        // Each level has a bar width, colour and label
+        const levels = [
+            { width: "0%",   color: "transparent", label: "Enter a password to see strength" },
+            { width: "25%",  color: "#ef4444",      label: "Weak — try adding numbers or symbols" },
+            { width: "50%",  color: "#f59e0b",      label: "Fair — add uppercase letters or symbols" },
+            { width: "75%",  color: "#3b82f6",      label: "Good — almost there!" },
+            { width: "100%", color: "#10b981",      label: "Strong password ✓" }
+        ];
+
+        // If the field is empty, reset to level 0
+        const level = password.length === 0 ? levels[0] : levels[strength];
+        bar.style.width      = level.width;
+        bar.style.background = level.color;
+        hint.textContent     = level.label;
+    }
+    </script>
+
+    <!-- Main JS file — contains registerUser() and all shared functions -->
+    <script src="script.js"></script>
+
+</body>
+</html>

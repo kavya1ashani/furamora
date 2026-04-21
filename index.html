@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furamora – Login</title>
+
+    <!-- Google Fonts — same fonts used across all pages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet shared across all pages -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- blob-bg adds the gradient background and decorative blobs from style.css -->
+<body class="blob-bg">
+
+    <!-- Static navigation bar — not fixed, scrolls with the page -->
+    <nav class="nav-static">
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="Furamora logo">
+            <span>Furamora</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html">Home</a>
+            <!-- Get Started button takes new users to the register page -->
+            <a href="register.html" class="nav-cta">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Two-column layout: branding panel on the left, login card on the right -->
+    <div class="page-body">
+
+        <!-- LEFT: branding panel with features list -->
+        <div class="left-panel fade-up">
+
+            <div class="eyebrow">🐾 Welcome back</div>
+
+            <h1>Your pet's walks,<br><em>tracked & trusted.</em></h1>
+
+            <p>
+                Log in to manage bookings, track walks in real time
+                and stay connected with your dog's carer — all in one place.
+            </p>
+
+            <!-- List of key features to remind the user what the platform offers -->
+            <ul class="feature-list">
+                <li>
+                    <div class="feature-tick">📍</div>
+                    Live GPS walk tracking via Google Maps
+                </li>
+                <li>
+                    <div class="feature-tick">📋</div>
+                    Written reports after every walk
+                </li>
+                <li>
+                    <div class="feature-tick">✅</div>
+                    Verified, trusted local walkers
+                </li>
+                <li>
+                    <div class="feature-tick">🏅</div>
+                    Earn Paw Points with every booking
+                </li>
+            </ul>
+
+        </div>
+
+        <!-- RIGHT: login card -->
+        <div class="login-card fade-up delay-2">
+
+            <h2>Login</h2>
+            <p class="card-sub">Please enter your details to access your dashboard.</p>
+
+            <!-- Login form — onsubmit returns false to stop the page reloading -->
+            <!-- loginUser() in script.js handles the actual login logic -->
+            <form onsubmit="return false;">
+
+                <!-- Email input -->
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input id="login-email" type="email"
+                               placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <!-- Password input -->
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input id="login-password" type="password"
+                               placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <!-- Role selector — loginUser() uses this to redirect to the right dashboard -->
+                <div class="form-group">
+                    <label for="loginRole">I am a</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <select id="loginRole" required>
+                            <option value="">Select your role</option>
+                            <option value="owner">Pet Owner</option>
+                            <option value="walker">Dog Walker</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Calls loginUser() from script.js when clicked -->
+                <button type="button" class="btn-login" onclick="loginUser()">
+                    Login to Dashboard
+                </button>
+
+            </form>
+
+            <!-- Thin divider line between the form and the link below -->
+            <div class="card-divider"></div>
+
+            <!-- Link for users who don't have an account yet -->
+            <p class="card-footer-text">
+                New to Furamora?
+                <a href="register.html">Create a free account</a>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">Furamora</div>
+        <p>© 2026 Furamora – Prototype developed for BSc Computer Science, University of Westminster</p>
+    </footer>
+
+    <!-- Firebase SDKs — must load before firebase-init.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase config — sets up db and auth -->
+    <script src="firebase-init.js"></script>
+    <!-- Main JS file — contains loginUser() and all shared functions -->
+    <script src="script.js"></script>
+
+</body>
+</html>
